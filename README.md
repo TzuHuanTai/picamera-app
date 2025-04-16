@@ -10,11 +10,13 @@
 <a href="https://play.google.com/store/apps/details?id=com.tzu.huan.tai.picamera"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="168"></a>
 </p>
 
-Transform your Raspberry Pi into a powerful home security camera with the Pi Camera app. Using peer-to-peer (P2P) communication over WebRTC to make a decentralized monitor system, this app connects directly to your Raspberry Pi, allowing you to monitor live video with minimal delay and access historical footage. [[demo video](https://www.youtube.com/watch?v=JZ5bcSAsXog)]
+Transform your Raspberry Pi into a powerful home security camera — with low-latency live streaming, playback support, and full P2P privacy. Built using [`picamera-react-native`](https://www.npmjs.com/package/picamera-react-native), this app connects directly to your Raspberry Pi camera over WebRTC and MQTT — no complex backend required.
+
+🎥 [Watch demo](https://www.youtube.com/watch?v=JZ5bcSAsXog)
 
 <img src="./img/index_dark.png" width="30%"> <img src="./img/live_dark.jpg" width="30%"> <img src="./img/records_dark.jpg" width="30%">
 
-## Key Features
+# Key Features
 
 👉 **Low-Latency Live Monitoring**: Achieve extremely low-latency video streaming through WebRTC technology, ensuring you don’t miss any important moments.
 
@@ -26,83 +28,88 @@ Transform your Raspberry Pi into a powerful home security camera with the Pi Cam
 
 👉 **Open-Source Support**: The camera source code is fully open-source, allowing you to customize and extend it as needed.
 
-## Setting Up a New Raspberry Pi
+# Setting Up a New Raspberry Pi
 
-### Step 0: Prerequisites
+## Step 0: Prerequisites
 
 1. A Raspberry Pi with a camera module attached.
 2. A MQTT server. (STUN and TURN servers are optional).
 
     <img src="./img/pi_zero_wi_shell.jpg" width=30%> <img src="./img/pi_zero_wo_shell.jpg" width=30%><br>
 
-***Important Notice***
-- *MQTT Server (necessary): ***It must be over SSL/TLS!*** This server exchanges initialized signals (ICE, SDP) to help p2p hole-punching. Please use the same setting on your raspberry pi camera program. You can setup own MQTT server, or choose some free plans including but not limited to [HiveMQ](https://www.hivemq.com), [EXMQ](https://www.emqx.com/en).*
-- *STUN Server (optional): If it's empty, the Google STUN server `stun:stun.l.google.com:19302` will be used by default.*
-- *TURN Server (optional): This is used for a few mobile networks or specific scenarios. If your NAT setup doesn't allow for p2p hole-punching, the TURN Server will help relay data transfers.*
+> [!IMPORTANT]
+> - **MQTT Server (necessary)**: **Must support SSL/TLS!** Used for exchanging initial WebRTC signaling (ICE, SDP). Match this with your Raspberry Pi setup.
+Consider providers like [HiveMQ](https://www.hivemq.com), [EXMQ](https://www.emqx.com/en).
+> - STUN Server (optional): Defaults to `stun:stun.l.google.com:19302` if left blank.
+> - TURN Server (optional): Helps in NAT-restricted networks when P2P is not possible.
 
-### Step 1: Set Configurations on the App
+## Step 1: Set Configurations on the App
 
 1. Go to Setting Page.
-2. Click 🌐 icon and paste your servers setting.
+2. Tap the 🌐 icon and paste your MQTT & signaling configuration.
 Here is an example mqtt setting shown on HiveMQ.
-- **Notice!** Please use ***WebSocket Port*** here!
 
-    <img src="./img/mqtt_cloud_sample.jpg" width=50%><br>
-    <img src="./img/setting_1.jpg" width="30%"> <img src="./img/setting_2.jpg" width="30%">
+> [!IMPORTANT]
+> Please use ***WebSocket Port*** here!
 
-### Step 2: Add a New Device in the Setting Page
 
-1. Click ➕ icon
-2. The app will generate a `UUID`, which will be used on your Raspberry Pi later.  
-    *If you'd like to assign a specific ID to the device, you can edit the `UUID` at the beginning. Once confirmed, the `UUID` cannot be edited; you will need to delete the device and add a new one if changes are needed.*
-3. Enter a name in the "Alias", which can be edited at any time in the future.
-4. The new device will appear on the list after clicking the confirm button. You can change the order of devices on the selectors and home page by dragging the ☰ icon.
+<img src="./img/mqtt_cloud_sample.jpg" width=50%><br>
+<img src="./img/setting_1.jpg" width="30%"> <img src="./img/setting_2.jpg" width="30%">
+
+## Step 2: Add a New Device
+
+1. Tap the ➕ icon.
+2. The app generates a `UUID`, used by your Raspberry Pi. You can modify it before saving.
+3. Enter an alias (editable anytime).
+4. Confirm to add the device. Drag ☰ icon to reorder.
 
     <img src="./img/add_devices.jpg" width="30%">
 
-### Step 3: Run Camera Software on Raspberry Pi
+## Step 3: Run Camera Software on Raspberry Pi
 
-1. Download the `pi_webrtc` software from the [release page](https://github.com/TzuHuanTai/RaspberryPi_WebRTC/releases).
+1. Download the `pi_webrtc` from the [release page](https://github.com/TzuHuanTai/RaspberryPi_WebRTC/releases).
 
-2. Run the `pi_webrtc` on your Raspberry Pi. Here’s an example where the device `uid` is set to `abcdefg-123-1qaz2wsx` in the app.
+2. Run with your device's `UUID` and MQTT credentials.
 
-    ***Important:*** The MQTT port specified in the command is **NOT the WebSocket port** (8884), but the standard **MQTT protocol port** (8883).
+> [!IMPORTANT]
+> MQTT port used in command = 8883 (**not** the WebSocket port).
 
-    ```bash
-    /path/to/pi_webrtc --device=/dev/video0 --fps=30 --width=1280 --height=960 --v4l2_format=h264 --hw_accel --mqtt_host=example.s1.eu.hivemq.cloud --mqtt_port=8883 --mqtt_username=hakunamatata --mqtt_password=WonderfulPhrase --uid=abcdefg-123-1qaz2wsx --record_path=/mnt/ext_disk/video/
-    ```
+```bash
+./pi_webrtc \
+    --camera=libcamera:0 \
+    --fps=30 \
+    --width=1280 \
+    --height=960 \
+    --use_mqtt \
+    --mqtt_host=your.mqtt.cloud \
+    --mqtt_port=8883 \
+    --mqtt_username=xxxx \
+    --mqtt_password=xxxx \
+    --uid=your-generated-uid \
+    --no_audio \
+    --hw_accel # --hw_accel only for Pi zero 2w, 3b, 3b+, and 4b. Remove it for Pi 5.
+```
 
-For detailed setup instructions, please refer to the guide on the [RaspberryPi_WebRTC](https://github.com/TzuHuanTai/RaspberryPi_WebRTC) page.
+Refer to [RaspberryPi-WebRTC](https://github.com/TzuHuanTai/RaspberryPi-WebRTC) for full setup guide.
 
-### Step 4: Verify the Connection
+## Step 4: Verify the Connection
 
-- Please switch to the home page, the app will try to connect to Raspberry Pi.
+- Open the home page.
 
-- If everything is correct, the status light will turn green.
+- A green status light means connection is live.
 
-- The preview image is refreshed every 90 seconds, and it can be refreshed immediately by scrolling down the page.
+- Preview refreshes every 90 seconds or manually by pull-to-refresh.
 
     <img src="./img/connected_sample.jpg" width="30%">
 
 
-### Step 5: Share to Other Phones
+## Step 5: Share to Other Phones
 
-1. Click the share button on the phone that can connect to Raspberry Pi already. It'll show the QR code.
-2. Pick up the second phone click the QR code button in the add device section, and scan the QR code will copy the device, including the network setting, to the second phone. **Notice! The network setting will be replaced in the second phone if set before.**
+1. Tap the share button to display QR code.
 
-    <img src="./img/share_1.jpg" width="30%">
-    <img src="./img/share_2.jpg" width="30%">
+2. On the second phone, scan the QR code in the add device section.
 
+> [!WARNING]
+> The network setting will be replaced in the second phone if set before.
 
-
-## Contact & Support
-
-If you have any questions, need support, or just want to provide feedback, you can reach out via 
-
-1. [Google Group](https://groups.google.com/g/pi-camera)
-
-2. [GitHub Issues](https://github.com/TzuHuanTai/Pi-Camera/issues)
-
-Thank you for using Pi Camera!
-
----
+<img src="./img/share_1.jpg" width="30%"> <img src="./img/share_2.jpg" width="30%">
